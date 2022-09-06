@@ -1,0 +1,87 @@
+import nu.studer.gradle.jooq.JooqEdition
+import org.jooq.meta.jaxb.Logging
+
+plugins {
+    id 'org.springframework.boot' version '2.7.3'
+    id 'io.spring.dependency-management' version '1.0.13.RELEASE'
+    id 'nu.studer.jooq' version '7.1.1'
+    id 'java'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '17'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-jooq'
+    runtimeOnly 'org.postgresql:postgresql'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    jooqGenerator 'org.postgresql:postgresql:42.4.1'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+jooq {
+    // use jOOQ version defined in Spring Boot
+    version = dependencyManagement.importedProperties['jooq.version']
+    edition = JooqEdition.OSS
+
+    configurations {
+        main {  // name of the jOOQ configuration
+            generateSchemaSourceOnCompilation = true  // default (can be omitted)
+
+            generationTool {
+                logging = Logging.WARN
+                jdbc {
+                    driver = 'org.postgresql.Driver'
+                    url = 'jdbc:postgresql://localhost:5432/postgres'
+                    user = 'some_user'
+                    password = 'some_secret'
+                    properties {
+                        property {
+                            key = 'ssl'
+                            value = 'true'
+                        }
+                    }
+                }
+                generator {
+                    name = 'org.jooq.codegen.DefaultGenerator'
+                    database {
+                        name = 'org.jooq.meta.postgres.PostgresDatabase'
+                        inputSchema = 'public'
+                        forcedTypes {
+                            forcedType {
+                                name = 'varchar'
+                                includeExpression = '.*'
+                                includeTypes = 'JSONB?'
+                            }
+                            forcedType {
+                                name = 'varchar'
+                                includeExpression = '.*'
+                                includeTypes = 'INET'
+                            }
+                        }
+                    }
+                    generate {
+                        deprecated = false
+                        records = true
+                        immutablePojos = true
+                        fluentSetters = true
+                    }
+                    target {
+                        packageName = 'com.exable.sample'
+                        directory = 'build/generated-src/jooq/main'  // default (can be omitted)
+                    }
+                    strategy.name = 'org.jooq.codegen.DefaultGeneratorStrategy'
+                }
+            }
+        }
+    }
+}
+

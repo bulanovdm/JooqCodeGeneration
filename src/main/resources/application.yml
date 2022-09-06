@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: admin
+    password: postgres
+
+  sql:
+    init:
+      schema-locations: schema/schema.sql
+      data-locations: schema/data.sql
+
+  jooq:
+    sql-dialect: postgres
